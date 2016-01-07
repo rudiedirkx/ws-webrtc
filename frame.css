@@ -1,0 +1,16 @@
+* {
+	box-sizing: border-box;
+}
+html, body {
+	margin: 0;
+	padding: 0;
+	height: 100%;
+}
+body {
+	overflow: auto;
+	border: solid 30px red;
+	padding: 10px;
+}
+body.loaded {
+	border-color: green;
+}
