@@ -1,3 +1,10 @@
+function isClient() {
+	return document.body.classList.contains('role-client');
+}
+
+function isCoach() {
+	return !isClient();
+}
 
 function init() {
 	var id = location.hash.substr(1);
@@ -11,6 +18,7 @@ function init() {
 	var socket = new WebSocket(url);
 	socket.on('close', function() {
 		document.body.classList.remove('loaded');
+		window.COMMANDS.leave && window.COMMANDS.leave.call(null, {});
 	});
 	socket.on('open', function() {
 		window.SOCKET = this;

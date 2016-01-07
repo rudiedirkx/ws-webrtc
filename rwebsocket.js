@@ -1,7 +1,10 @@
-var http = require('http'),
-	https = require('https'),
-	websocket = require('websocket'),
-	util = require('util');
+
+// Ahead of all other rwebsocket.js
+
+var http = require('http');
+var https = require('https');
+var websocket = require('websocket');
+var util = require('util');
 
 function _log(msg) {
 	console.log.apply(console, arguments);
@@ -67,6 +70,10 @@ module.exports = function(options) {
 		}, this);
 	};
 
+	if (commands._init) {
+		commands._init.call(null, WebSocketServer, WebSocketConnection);
+	}
+
 
 
 	// Dfine client event handlers here, so they exist only once
@@ -78,8 +85,17 @@ module.exports = function(options) {
 					throw "Missing 'cmd' in message."; // THROWS
 				}
 
-				_log('Incoming:');
-				_inspect(msg);
+				if (!commands._ignore || commands._ignore.indexOf(msg.cmd) == -1) {
+					_log('Incoming:');
+					_inspect(msg);
+				}
+
+				if (commands._any) {
+					try {
+						commands._any.call(this, msg); // THROWS
+					}
+					catch (ex) {}
+				}
 
 				var cmd = commands[msg.cmd];
 				if ( !cmd ) {

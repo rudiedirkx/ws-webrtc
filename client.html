@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-	<title>Multiplayer</title>
+	<title>Client</title>
 	<meta charset="UTF-8" />
 	<link rel="stylesheet" href="frame.css" />
 	<script src="ws.js"></script>
@@ -10,12 +10,63 @@
 
 <body onload="init()">
 
+<div class="other-status online">
+	<p>CLIENT IS ONLINE</p>
+</div>
+<div class="other-status offline">
+	<p>CLIENT IS OFFLINE</p>
+</div>
+
+<p class="call-action">
+	<button id="call-client">CALL CLIENT!</button>
+</p>
+<p class="being-called">
+	YOU'RE BEING CALLED...
+	<button id="accept-call">ACCEPT</button>
+	<button id="reject-call">REJECT</button>
+</p>
+
 <script src="client.js"></script>
 <script>
 var PORT = 8088;
 var SOCKET;
+
+var callingWindow;
+var callingTimer;
+var calledTimer;
+var beingCalled;
+
+document.querySelector('#call-client').onclick = function(e) {
+	// Disable button
+	this.disabled = true;
+
+	// Open calling popup, which starts sending 'call'
+	callingWindow = open('calling.html' + location.hash, 'calling', 'width=600, height=400');
+	callingTimer = setInterval(function(btn) {
+		if (callingWindow.closed) {
+			btn.disabled = false;
+			clearInterval(callingTimer);
+		}
+	}, 200, this);
+};
+
+document.querySelector('#accept-call').onclick = function(e) {
+	// Open calling popup, which sends 'accept'
+	callingWindow = open('calling.html' + location.hash, 'calling', 'width=600, height=400');
+};
+document.querySelector('#reject-call').onclick = function(e) {
+	// Immediately send 'reject'
+	SOCKET.sendCmd('reject', {from: beingCalled.from});
+};
+
+function updateClientStatus(online) {
+	document.body.classList.toggle('other-is-online', online);
+}
+
 var COMMANDS = {
 	init: function(data) { // Both
+		document.body.classList.add('role-' + data.role);
+
 		setInterval(function() {
 			SOCKET.sendCmd('ping');
 		}, 1000);
@@ -23,11 +74,23 @@ var COMMANDS = {
 	invalid: function(data) { // Both
 		alert('This ID is invalid. You cheat?');
 	},
-	join: function() { // Coach
 
+	join: function(data) { // Coach
+		updateClientStatus(true);
 	},
-	leave: function() { // Coach
+	leave: function(data) { // Coach
+		updateClientStatus(false);
+	},
 
+	call: function(data) { // Client
+		document.body.classList.add('being-called');
+		beingCalled = data;
+
+		clearTimeout(calledTimer);
+		calledTimer = setTimeout(function() {
+			document.body.classList.remove('being-called');
+			beingCalled = null;
+		}, 3000);
 	},
 };
 </script>

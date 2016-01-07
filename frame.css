@@ -1,3 +1,7 @@
+/**
+ * FRAME
+ */
+
 * {
 	box-sizing: border-box;
 }
@@ -13,4 +17,60 @@ body {
 }
 body.loaded {
 	border-color: green;
+}
+
+
+/**
+ * CLIENT
+ */
+
+.other-status {
+	position: absolute;
+	top: 15px;
+	right: 15px;
+	display: none;
+	background: #eee;
+	padding: 15px;
+	box-shadow: 0 0 10px #000;
+	text-align: center;
+}
+.other-status.online {
+	background: #afa;
+}
+.other-status.offline {
+	background: #faa;
+}
+body.role-coach.other-is-online .other-status.online,
+body.role-coach:not(.other-is-online) .other-status.offline {
+	display: block;
+}
+.other-status p {
+	margin: 0;
+}
+.other-status p + p {
+	margin-top: 1em;
+}
+
+
+/**
+ * CALL ACTIONS
+ */
+
+p.call-action,
+p.being-called {
+	display: none;
+}
+body.role-coach.other-is-online .call-action,
+body.role-client.being-called .being-called {
+	display: block;
+}
+
+#call-client {
+	color: green;
+	font-weight: bold;
+}
+#call-client:disabled {
+	color: red;
+	opacity: 0.8;
+	font-weight: normal;
 }

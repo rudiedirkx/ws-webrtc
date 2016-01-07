@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-	<title>Multiplayer</title>
+	<title>Calling</title>
 	<meta charset="UTF-8" />
 	<link rel="stylesheet" href="frame.css" />
 	<script src="ws.js"></script>
@@ -14,28 +14,53 @@
 <script>
 var PORT = 8088;
 var SOCKET;
+
+var callingTimer;
+function callClient() {
+	console.log("Sending 'call' signal to client");
+	SOCKET.sendCmd('call', {browser: 'whatever', os: 'the best'});
+}
+
 var COMMANDS = {
 	init: function(data) { // Both
+		document.body.classList.add('role-' + data.role);
+
 		setInterval(function() {
 			SOCKET.sendCmd('ping');
 		}, 1000);
+
+		if (isCoach()) {
+			// Keep sending the call signal
+			callingTimer = setInterval(callClient, 2000);
+			callClient();
+		}
+
+		if (isClient()) {
+			// Accept call
+			SOCKET.sendCmd('accept', {browser: 'whatever', os: 'the best'});
+		}
 	},
 	invalid: function(data) { // Both
 		alert('This ID is invalid. You cheat?');
 	},
 
-	join: function() { // Coach
-
+	leave: function() { // Both
+		clearInterval(callingTimer);
+		setTimeout(function() {
+			alert("They went OFFLINE.");
+		});
 	},
-	leave: function() { // Coach
-
-	},
-
-	call: function() { // Client
-
+	reject: function() { // Coach
+		clearInterval(callingTimer);
+		setTimeout(function() {
+			alert("They REJECTED your call.");
+		});
 	},
 	accept: function() { // Coach
-
+		clearInterval(callingTimer);
+		setTimeout(function() {
+			alert("They ACCEPTED your call.\n\n@todo Start WebRTC handshake...");
+		});
 	},
 
 	offer: function() { // Client

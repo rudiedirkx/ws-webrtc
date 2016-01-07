@@ -41,6 +41,17 @@ var wsw = {
 };
 
 var commands = {
+	_ignore: ['ping'],
+	_init: function(WebSocketServer, WebSocketConnection) {
+		WebSocketConnection.prototype.withAllOtherUsersInGame = function(callback) {
+			this.withAllOtherClientsInGame(function(other) {
+				if (this.data.user != other.data.user) {
+					callback.call(this, other);
+				}
+			});
+		};
+	},
+
 	/**
 	 * PRESENCE
 	 */
@@ -122,10 +133,30 @@ _log('tell ' + other.data.role + ' ' + other.data.id + ' that ' + client.data.ro
 	 * CALLING
 	 */
 	call: function(data) { // Coach to client
-		// @todo
+		// Only accept the call signal from a coach
+		if (this.data.role == 'coach') {
+			this.withAllOtherUsersInGame(function(other) {
+				other.sendCmd('call', {from: this.data.id});
+			});
+		}
 	},
-	accept: function() { // Client to coach
-		// @todo
+	accept: function(data) { // Client to coach
+		// Only accept the accept signal from a client
+		if (this.data.role == 'client') {
+			this.withAllOtherUsersInGame(function(other) {
+				other.sendCmd('accept');
+			});
+		}
+	},
+	reject: function(data) { // Client to coach
+		// Only accept the reject signal from a client
+		if (this.data.role == 'client') {
+			this.withAllOtherClientsInGame(function(other) {
+				if (other.data.id == data.from) {
+					other.sendCmd('reject');
+				}
+			});
+		}
 	},
 
 	/**
