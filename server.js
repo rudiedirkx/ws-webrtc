@@ -41,9 +41,9 @@ var wsw = {
 };
 
 var commands = {
-	_open: function() {
-		// Ignore this, because online starts only after the 'init' signal
-	},
+	/**
+	 * PRESENCE
+	 */
 	init: function(data) {
 		this.data.user = data.id;
 		var client = this;
@@ -96,6 +96,10 @@ _log('tell ' + client.data.role + ' ' + client.data.id + ' that ' + other.data.r
 		});
 
 	},
+	ping: function() {
+		// Push ahead (reset) the timeout timer
+		commands._listenForTimeout.call(this);
+	},
 	_listenForTimeout: function() {
 		online[this.data.user] = 1;
 
@@ -113,12 +117,29 @@ _log('tell ' + other.data.role + ' ' + other.data.id + ' that ' + client.data.ro
 			}
 		}, 3000, this);
 	},
-	ping: function() {
-		// Push ahead (reset) the timeout timer
-		commands._listenForTimeout.call(this);
-	},
-	call: function() {
+
+	/**
+	 * CALLING
+	 */
+	call: function(data) { // Coach to client
 		// @todo
+	},
+	accept: function() { // Client to coach
+		// @todo
+	},
+
+	/**
+	 * WEBRTC
+	 */
+	offer: function(data) { // Coach to client
+		// @todo
+	},
+	answer: function() { // Client to coach
+		// @todo
+	},
+
+	_open: function() {
+		// Ignore this, because online starts only after the 'init' signal
 	},
 	_close: function() {
 		// Ignore this signal, because 1 user might have 4 instances/windows, and one of them closing doesn't mean offline
