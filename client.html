@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<title>Multiplayer</title>
+	<meta charset="UTF-8" />
+	<style>
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; height: 100%; }
+	body { overflow: auto; border: solid 30px red; padding: 10px; }
+	body.loaded { border-color: green; }
+	</style>
+	<script>
+	function _log() {
+		return console.log.apply(console, arguments);
+	}
+	(function(P) {
+		P.on = P.addEventListener;
+		P.sendJSON = function(data, callback) {
+			return this.send(JSON.stringify(data), callback);
+		};
+		P.sendCmd = function(cmd, data) {
+			data || (data = {});
+			data.cmd = cmd;
+			return this.sendJSON(data);
+		};
+	})(WebSocket.prototype);
+	</script>
+</head>
+
+<body onload="init()">
+
+<script>
+window.onerror = function(e) {
+	alert(e);
+};
+
+var PORT = 8088;
+var SOCKET;
+var COMMANDS = {
+	init: function(data) { // Both
+		setInterval(function() {
+			SOCKET.sendCmd('ping');
+		}, 1000);
+	},
+	invalid: function(data) { // Both
+		alert('This ID is invalid. You cheat?');
+	},
+	join: function() { // Coach
+
+	},
+	leave: function() { // Coach
+
+	},
+};
+
+function createSocket(port, callback) {
+	var url = 'wss://' + location.hostname + ':' + port;
+	var socket = new WebSocket(url);
+	socket.on('open', function() {
+		this.connectedAt = new Date;
+
+		callback.call(this);
+	});
+	socket.on('close', function() {
+		document.body.classList.remove('loaded');
+	});
+}
+
+function init() {
+	var id = location.hash.substr(1);
+	if (!id) {
+		alert('Need #id: coach1, client1, coach2, client2');
+		return;
+	}
+
+	_log('initializing socket...');
+	createSocket(PORT, function() {
+		SOCKET = this;
+		document.body.classList.add('loaded');
+		_log('on open');
+
+		this.sendCmd('init', {id: id});
+
+		this.on('message', function(e) {
+			var msg = JSON.parse(e.data);
+console.log('msg', msg.cmd, msg);
+			if (COMMANDS[msg.cmd]) {
+				COMMANDS[msg.cmd].call(null, msg);
+			}
+
+			var cmd = msg.cmd;
+			delete msg.cmd;
+			var pre = document.createElement('pre');
+			pre.textContent = cmd + ': ' + JSON.stringify(msg);
+			document.body.insertBefore(pre, document.body.firstElementChild);
+		});
+	});
+}
+</script>
+
+</body>
+
+</html>
