@@ -158,22 +158,31 @@ _log('tell ' + other.data.role + ' ' + other.data.id + ' that ' + client.data.ro
 			});
 		}
 	},
+	unable: function(data) { // Both
+		this.withAllOtherClientsInGame(function(other) {
+			other.sendCmd('unable');
+		});
+	},
 
 	/**
 	 * WEBRTC
 	 */
 	offer: function(data) { // Coach to client
-		// @todo
+		this.withAllOtherClientsInGame(function(other) {
+			other.sendCmd('offer', data);
+		});
 	},
-	answer: function() { // Client to coach
-		// @todo
+	answer: function(data) { // Client to coach
+		this.withAllOtherClientsInGame(function(other) {
+			other.sendCmd('answer', data);
+		});
 	},
 
 	_open: function() {
 		// Ignore this, because online starts only after the 'init' signal
 	},
 	_close: function() {
-		// Ignore this signal, because 1 user might have 4 instances/windows, and one of them closing doesn't mean offline
+		// Ignore this, because 1 user might have 4 instances/windows, and one of them closing doesn't mean offline
 	},
 };
 

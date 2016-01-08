@@ -74,3 +74,12 @@ body.role-client.being-called .being-called {
 	opacity: 0.8;
 	font-weight: normal;
 }
+
+
+/**
+ * CALLING
+ */
+
+video {
+	background-color: black;
+}

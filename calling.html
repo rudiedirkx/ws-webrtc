@@ -10,15 +10,55 @@
 
 <body onload="init()">
 
+<div class="videos">
+	<video class="video you" height="200" width="300"></video>
+	<video class="video them" height="200" width="300"></video>
+</div>
+
 <script src="client.js"></script>
+<script src="https://rawgit.com/webrtc/adapter/master/adapter.js"></script>
 <script>
 var PORT = 8088;
 var SOCKET;
+
+// Prepare VIDEO
+var $videoYou = document.querySelector('video.you');
+var $videoThem = document.querySelector('video.them');
+$videoYou.onmetadataloaded = $videoThem.onmetadataloaded = function(e) {
+	console.log(e.type, e, this);
+	this.play();
+};
+
+// Prepare RTC
+var pc = new RTCPeerConnection;
+pc.onaddstream = function(e) {
+	console.debug(e.type, e);
+	if (e.self) {
+		$videoYou.srcObject = e.stream;
+		$videoYou.play();
+	}
+	else {
+		$videoThem.srcObject = e.stream;
+		$videoThem.play();
+	}
+};
 
 var callingTimer;
 function callClient() {
 	console.log("Sending 'call' signal to client");
 	SOCKET.sendCmd('call', {browser: 'whatever', os: 'the best'});
+}
+
+function selfUnable() {
+	setTimeout(function() {
+		alert("You don't have video capabilities...");
+		window.close();
+	});
+}
+
+function onError(e) {
+	console.log('error', e);
+	selfUnable();
 }
 
 var COMMANDS = {
@@ -30,44 +70,88 @@ var COMMANDS = {
 		}, 1000);
 
 		if (isCoach()) {
-			// Keep sending the call signal
-			callingTimer = setInterval(callClient, 2000);
-			callClient();
+			getUserMedia({video: true, audio: false}, function(stream) {
+				// Add video stream to RTC
+				pc.onaddstream({stream: stream, self: true});
+				pc.addStream(stream);
+
+				// Keep sending the call signal
+				callingTimer = setInterval(callClient, 2000);
+				callClient();
+			}, function() {
+				// Self fail
+				selfUnable();
+			});
 		}
 
 		if (isClient()) {
-			// Accept call
-			SOCKET.sendCmd('accept', {browser: 'whatever', os: 'the best'});
+			getUserMedia({video: true, audio: false}, function(stream) {
+				// Start RTC
+				pc.onaddstream({stream: stream, self: true});
+				pc.addStream(stream);
+
+				// Accept call
+				SOCKET.sendCmd('accept', {browser: 'whatever', os: 'the best'});
+			}, function() {
+				// Self fail
+				SOCKET.sendCmd('unable', {location: 'getUserMedia'});
+				selfUnable();
+			});
 		}
 	},
 	invalid: function(data) { // Both
 		alert('This ID is invalid. You cheat?');
 	},
 
-	leave: function() { // Both
+	leave: function(data) { // Both
 		clearInterval(callingTimer);
 		setTimeout(function() {
 			alert("They went OFFLINE.");
 		});
 	},
-	reject: function() { // Coach
+	unable: function(data) {
+		clearInterval(callingTimer);
+		setTimeout(function() {
+			alert("They are UNABLE to call.");
+		});
+	},
+	reject: function(data) { // Coach
 		clearInterval(callingTimer);
 		setTimeout(function() {
 			alert("They REJECTED your call.");
 		});
 	},
-	accept: function() { // Coach
+	accept: function(data) { // Coach
 		clearInterval(callingTimer);
-		setTimeout(function() {
-			alert("They ACCEPTED your call.\n\n@todo Start WebRTC handshake...");
-		});
+
+		pc.createOffer(function(offer) {
+			var sdesc = new RTCSessionDescription(offer);
+			pc.setLocalDescription(sdesc, function() {
+				SOCKET.sendCmd('offer', {
+					type: offer.type,
+					sdp: offer.sdp,
+				});
+			}, onError);
+		}, onError);
 	},
 
-	offer: function() { // Client
-
+	offer: function(data) { // Client
+		pc.setRemoteDescription(new RTCSessionDescription(data), function() {
+			pc.createAnswer(function(answer) {
+				var sdesc = new RTCSessionDescription(answer);
+				pc.setLocalDescription(sdesc, function() {
+					SOCKET.sendCmd('answer', {
+						type: answer.type,
+						sdp: answer.sdp,
+					});
+				}, onError);
+			}, onError);
+		}, onError);
 	},
-	answer: function() { // Coach
-
+	answer: function(data) { // Coach
+		pc.setRemoteDescription(new RTCSessionDescription(data), function() {
+			// done?
+		}, onError);
 	},
 };
 </script>

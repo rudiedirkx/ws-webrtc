@@ -36,12 +36,20 @@ var callingTimer;
 var calledTimer;
 var beingCalled;
 
+function openPopup() {
+	var width = 750, height = 500;
+	var position = isClient()
+		? 'left=' + (screen.width - 30 - width) + ', top=' + (screen.height - 20 - height)
+		: 'left=20, top=20';
+	return open('calling.html' + location.hash, 'calling', 'width=' + width + ', height=' + height + ', ' + position);
+}
+
 document.querySelector('#call-client').onclick = function(e) {
 	// Disable button
 	this.disabled = true;
 
 	// Open calling popup, which starts sending 'call'
-	callingWindow = open('calling.html' + location.hash, 'calling', 'width=600, height=400');
+	callingWindow = openPopup();
 	callingTimer = setInterval(function(btn) {
 		if (callingWindow.closed) {
 			btn.disabled = false;
@@ -52,7 +60,7 @@ document.querySelector('#call-client').onclick = function(e) {
 
 document.querySelector('#accept-call').onclick = function(e) {
 	// Open calling popup, which sends 'accept'
-	callingWindow = open('calling.html' + location.hash, 'calling', 'width=600, height=400');
+	callingWindow = openPopup();
 };
 document.querySelector('#reject-call').onclick = function(e) {
 	// Immediately send 'reject'
