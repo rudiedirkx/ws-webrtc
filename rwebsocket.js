@@ -1,6 +1,3 @@
-
-// Ahead of all other rwebsocket.js
-
 var http = require('http');
 var https = require('https');
 var websocket = require('websocket');

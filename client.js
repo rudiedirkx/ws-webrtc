@@ -14,7 +14,7 @@ function init() {
 	}
 
 	_log('initializing socket...');
-	var url = 'wss://' + location.hostname + ':' + window.PORT;
+	var url = location.protocol == 'https:' ? 'wss://' + location.hostname + '/ws' : 'ws://' + location.hostname + ':8086';
 	var socket = new WebSocket(url);
 	socket.on('close', function() {
 		document.body.classList.remove('loaded');

@@ -82,4 +82,6 @@ body.role-client.being-called .being-called {
 
 video {
 	background-color: black;
+	max-width: 100%;
+	height: auto;
 }

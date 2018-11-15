@@ -188,7 +188,6 @@ _log('tell ' + other.data.role + ' ' + other.data.id + ' that ' + client.data.ro
 
 var options = {
 	port: 8088,
-	ssl : require('./ssl-conf'),
 	commands: commands,
 };
 var rws = rwebsocket(options);
